@@ -4,6 +4,8 @@
 
 # How to use
 
+This works better in cases when your avatar is fairly resource demanding
+
 Keybinds
 
 Enable: "=/+" key
@@ -15,3 +17,4 @@ Refresh your avatar after enabling/disabling (Easy way is to toggle osc so you d
 # Downsides
 
 Only thing that breaks is you cant see your head in mirrors or cameras
+
