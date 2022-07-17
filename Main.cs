@@ -1,84 +1,123 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using MelonLoader;
+using System.IO;
+using System.Threading.Tasks;
+using System.Threading;
 
-[assembly: MelonInfo(typeof(DownloadMoreFPS.Main), "DownloadMoreFPS", "6.9.4.20", "Zetrex", null)]
+[assembly: MelonInfo(typeof(DownloadMoreFPS.Main), "DownloadMoreFPS", "0.0.0.2", "Zetrex", null)]
 [assembly: MelonColor(ConsoleColor.Green)]
 [assembly: MelonGame("VRChat", "VRChat")]
-[assembly: MelonPriority(2147483647)]
 
 namespace DownloadMoreFPS
 {
     public class Main : MelonMod
     {
         private bool enabled;
+        private bool can_run = true;
+        private VRCPlayer player = null;
 
         public static MelonPreferences_Category category;
         public static MelonPreferences_Entry<bool> ml_Enabled;
+
+        public override void OnPreSupportModule()
+        {
+            if (!File.Exists(MelonUtils.GameDirectory + "/Mods/VRChatUtilityKit.dll"))
+            {
+                MelonLogger.Warning("Could not find VRChatUtilityKit.dll, this mod with not function without it!");
+                can_run = false;
+            }
+        }
         public override void OnApplicationStart()
         {
+            if (!can_run)
+                return;
+
             category = MelonPreferences.CreateCategory("DownloadMoreFPS");
 
-            ml_Enabled = category.CreateEntry("enabled", false);
+            ml_Enabled = category.CreateEntry("DMFPS_Enabled", false);
 
             enabled = ml_Enabled.Value;
 
-            MelonLogger.Msg("Use the \"-\" and \"+\" keys to enable and disable.");
+            VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated += GetPlayer;
 
-            if (enabled)
+            ml_Enabled.OnValueChanged += Update;
+        }
+
+        public void GetPlayer(VRCAvatarManager vrca, VRC.Core.ApiAvatar apiAvatar, GameObject gameObject)
+        {
+            if (player == null)
             {
-                MelonLogger.Msg("Currently Enabled");
-                VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated += FixAvatar;
-            }
-            else
-            {
-                MelonLogger.Msg("Currently Disabled");
-                VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated -= FixAvatar;
+                player = vrca.field_Private_VRCPlayer_0;
+                MelonLogger.Msg("Player Found, please reload avatar to apply fix.");
+
+                VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated -= GetPlayer;
+                return;
             }
         }
 
         private void FixAvatar(VRCAvatarManager vrca, VRC.Core.ApiAvatar apiAvatar, GameObject gameObject)
         {
+            MelonLogger.Msg("Running fix...");
+
             GameObject shadowClone = gameObject.transform.parent.Find("_AvatarShadowClone").gameObject;
             GameObject mirrorClone = gameObject.transform.parent.Find("_AvatarMirrorClone").gameObject;
             GameObject.DestroyImmediate(shadowClone);
             GameObject.DestroyImmediate(mirrorClone);
 
-            for (int i = 0; i < gameObject.transform.childCount; i++)
-            {
-                GameObject obj = gameObject.transform.GetChild(i).gameObject;
+            SkinnedMeshRenderer[] skinnedMeshRenderers = Resources.FindObjectsOfTypeAll<SkinnedMeshRenderer>();
+            MeshRenderer[] MeshRenderers = Resources.FindObjectsOfTypeAll<MeshRenderer>();
 
-                if (obj.GetComponent<SkinnedMeshRenderer>())
+            Task.Run(() =>
+            {
+                foreach (SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
                 {
-                    SkinnedMeshRenderer skinnedMeshRenderer = obj.GetComponent<SkinnedMeshRenderer>();
-
-                    skinnedMeshRenderer.castShadows = true;
-                    obj.layer = 9;
+                    if (skinnedMeshRenderer.gameObject.layer == 10)
+                    {
+                        skinnedMeshRenderer.castShadows = true;
+                        skinnedMeshRenderer.gameObject.layer = 9;
+                    }
                 }
-            }
-        }
 
-        public override void OnFixedUpdate()
-        {
-            if (Input.GetKeyDown(KeyCode.Equals))
+                foreach (MeshRenderer MeshRenderer in MeshRenderers)
+                {
+                    if (MeshRenderer.gameObject.layer == 10)
+                    {
+                        MeshRenderer.castShadows = true;
+                        MeshRenderer.gameObject.layer = 9;
+                    }
+                }
+            });
+
+            if (gameObject.transform.parent.gameObject.name != "ForwardDirection")
             {
-                enabled = true;
-                ml_Enabled.Value = enabled;
-                ml_Enabled.Save();
+                MelonLogger.Error("Avatar failed to reload properly, retrying...");
+                VRChatUtilityKit.Utilities.VRCUtils.ReloadAvatar(player);
+                return;
+            }
+
+            MelonLogger.Msg("Fix Complete!");
+        }
+        private void Update(bool _bool, bool _bool2)
+        {
+            if (_bool2)
+            {
+                enabled = ml_Enabled.Value;
+                MelonPreferences.SetEntryValue<bool>("DownloadMoreFPS", "DMFPS_Enabled", enabled);
                 VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated += FixAvatar;
                 LoggerInstance.Msg("Enabled");
                 category.SaveToFile(false);
+                VRChatUtilityKit.Utilities.VRCUtils.ReloadAvatar(player);
             }
 
-            if (Input.GetKeyDown(KeyCode.Minus))
+            if (!_bool2)
             {
-                enabled = false;
-                ml_Enabled.Value = enabled;
-                ml_Enabled.Save();
-                MelonPreferences.SetEntryValue<bool>("DownloadMoreFPS", "enabled", enabled);
+                enabled = ml_Enabled.Value;
+                MelonPreferences.SetEntryValue<bool>("DownloadMoreFPS", "DMFPS_Enabled", enabled);
                 VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated -= FixAvatar;
                 LoggerInstance.Msg("Disabled");
                 category.SaveToFile(false);
+                VRChatUtilityKit.Utilities.VRCUtils.ReloadAvatar(player);
             }
         }
     }
