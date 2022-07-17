@@ -4,17 +4,10 @@
 
 # How to use
 
-This works better in cases when your avatar is fairly resource demanding
+Toggle is in UIExpansionKit
 
-Keybinds
-
-Enable: "=/+" key
-
-Disable: "-" key
-
-Refresh your avatar after enabling/disabling (Easy way is to toggle osc so you dont reset your params)
+You will need to manually reload your avatar once after the game boots
 
 # Downsides
 
 Only thing that breaks is you cant see your head in mirrors or cameras
-
