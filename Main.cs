@@ -39,26 +39,19 @@ namespace DownloadMoreFPS
 
             enabled = ml_Enabled.Value;
 
-            VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated += GetPlayer;
+            if (enabled == true)
+            {
+                VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated += FixAvatar;
+            }
 
             ml_Enabled.OnValueChanged += Update;
-        }
-
-        public void GetPlayer(VRCAvatarManager vrca, VRC.Core.ApiAvatar apiAvatar, GameObject gameObject)
-        {
-            if (player == null)
-            {
-                player = vrca.field_Private_VRCPlayer_0;
-                MelonLogger.Msg("Player Found, please reload avatar to apply fix.");
-
-                VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated -= GetPlayer;
-                return;
-            }
         }
 
         private void FixAvatar(VRCAvatarManager vrca, VRC.Core.ApiAvatar apiAvatar, GameObject gameObject)
         {
             MelonLogger.Msg("Running fix...");
+
+            player = vrca.field_Private_VRCPlayer_0;
 
             GameObject shadowClone = gameObject.transform.parent.Find("_AvatarShadowClone").gameObject;
             GameObject mirrorClone = gameObject.transform.parent.Find("_AvatarMirrorClone").gameObject;
