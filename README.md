@@ -6,7 +6,7 @@
 
 Toggle is in UIExpansionKit
 
-You will need to manually reload your avatar once after the game boots
+You will need to toggle it in UIX every time you start the game (I'm working on fixing that)
 
 # Downsides
 
