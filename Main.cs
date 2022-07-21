@@ -26,6 +26,14 @@ namespace DownloadMoreFPS
             {
                 MelonLogger.Warning("Could not find VRChatUtilityKit.dll, this mod with not function without it!");
                 can_run = false;
+                Thread.Sleep(2000)
+            }
+
+            if (!File.Exists(MelonUtils.GameDirectory + "/Mods/UIExpansionKit.dll"))
+            {
+                MelonLogger.Warning("Could not find UIExpansionKit.dll, this mod with not function without it!");
+                can_run = false;
+                hread.Sleep(2000)
             }
         }
         public override void OnApplicationStart()
