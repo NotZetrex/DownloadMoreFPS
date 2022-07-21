@@ -15,7 +15,6 @@ namespace DownloadMoreFPS
     {
         private bool enabled;
         private bool can_run = true;
-        private VRCPlayer player = null;
 
         public static MelonPreferences_Category category;
         public static MelonPreferences_Entry<bool> ml_Enabled;
@@ -59,8 +58,6 @@ namespace DownloadMoreFPS
         {
             MelonLogger.Msg("Running fix...");
 
-            player = vrca.field_Private_VRCPlayer_0;
-
             GameObject shadowClone = gameObject.transform.parent.Find("_AvatarShadowClone").gameObject;
             GameObject mirrorClone = gameObject.transform.parent.Find("_AvatarMirrorClone").gameObject;
             GameObject.DestroyImmediate(shadowClone);
@@ -92,8 +89,7 @@ namespace DownloadMoreFPS
 
             if (gameObject.transform.parent.gameObject.name != "ForwardDirection")
             {
-                MelonLogger.Error("Avatar failed to reload properly, retrying...");
-                VRChatUtilityKit.Utilities.VRCUtils.ReloadAvatar(player);
+                MelonLogger.Error("Avatar failed to reload properly, please reload again!");
                 return;
             }
 
@@ -108,7 +104,6 @@ namespace DownloadMoreFPS
                 VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated += FixAvatar;
                 LoggerInstance.Msg("Enabled");
                 category.SaveToFile(false);
-                VRChatUtilityKit.Utilities.VRCUtils.ReloadAvatar(player);
             }
 
             if (!_bool2)
@@ -118,7 +113,6 @@ namespace DownloadMoreFPS
                 VRChatUtilityKit.Utilities.NetworkEvents.OnAvatarInstantiated -= FixAvatar;
                 LoggerInstance.Msg("Disabled");
                 category.SaveToFile(false);
-                VRChatUtilityKit.Utilities.VRCUtils.ReloadAvatar(player);
             }
         }
     }
